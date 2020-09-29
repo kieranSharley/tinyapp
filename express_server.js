@@ -52,6 +52,13 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   //  urlDatabase[shortURL] = req.body.longURL;
   //when buttom is pressed browser runs this logic = <form method="POST" action="/urls/<%= url %>/delete"> 
 });
+//EDIT = POST /urls/:id // EDIT
+app.post('/urls/:shortURL', (req, res) => {
+  const shortURL = req.params.shortURL;
+  urlDatabase[shortURL] = req.body.longURL;
+  //edit urlDatabase[shortURL];
+  res.redirect(`/urls/${shortURL}`);
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
