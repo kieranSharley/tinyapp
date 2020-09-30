@@ -41,8 +41,9 @@ app.get("/urls.json", (req, res) => {
 app.get("/urls", (req, res) => {
   const templateVars = {
     urls: urlDatabase,
-    username: req.cookies["username"]
+    userId: req.cookies["userId"]
   };
+  console.log(templateVars.userId);
   res.render("urls_index", templateVars);
 });
 
@@ -51,7 +52,7 @@ app.get("/urls", (req, res) => {
 // });
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    username: req.cookies["username"]
+    userId: req.cookies["userId"]
   };
   res.render("urls_new", templateVars);
 });
@@ -67,7 +68,8 @@ app.post("/urls", (req, res) => {
 //create register page
 app.get('/register', (req, res) => {
   const templateVars = {
-    username: req.cookies["username"]
+    userId: req.cookies["userId"],
+    userId: req.cookies["userId.password"]
   };
   res.render('urls_register', templateVars);
 });
@@ -80,7 +82,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
-    username: req.cookies["username"]
+    userId: req.cookies["userId"]
   };
   res.render("urls_show", templateVars);
 });
@@ -96,17 +98,37 @@ app.post('/urls/:shortURL', (req, res) => {
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect(`/urls/${shortURL}`);
 });
-//login
+//login // adapting... to userID
 app.post('/login', (req, res) => {
-  let username = req.body.username;
-  res.cookie('username', username);
-  res.redirect('/urls');
+  let email = req.body.email;
+  console.log(email);
+  let password = req.body.password;
+  let founduser;
+  for (let id in users) {
+    if (email === users[id].email) {
+      founduser = users[id];
+    }
+  }
+  if (founduser) {
+    res.cookie('userId', founduser.id);
+    res.redirect('/urls');
+  } else {
+    res.send('user not found!');
+  }
+
 });
 //logout
 app.post('/logout', (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('userId', 'password');
   res.redirect('/urls');
 });
+//register 
+// If the e-mail or password are empty strings, send back a response with the 400 status code.
+// If someone tries to register with an email that is already in the users object,
+// send back a response with the 400 status code. Checking for an email in the users 
+// object is something we'll need to do in other routes as well. Consider creating
+// an email lookup helper function to keep your code DRY
+
 app.post('/register', (req, res) => {
   const userId = generateRandomString();
   users[userId] = {
@@ -114,8 +136,9 @@ app.post('/register', (req, res) => {
     email: req.body.email,
     password: req.body.password,
   };
-  res.cookie('userID', userId);
-  console.log(users)
+  console.log(users);
+  res.cookie('userId', userId);
+  //console.log(users);
 
   res.redirect('/urls');
 });
