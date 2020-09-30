@@ -1,11 +1,14 @@
 const express = require("express");
 const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
+
 const app = express();
 const PORT = 8080
   ;
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.set("view engine", "ejs");
 
 const urlDatabase = {
@@ -20,14 +23,21 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = {
+    urls: urlDatabase,
+    username: req.cookies["username"]
+  };
   res.render("urls_index", templateVars);
 });
+
 // app.get("/hello", (req, res) => {
 //   res.send("<html><body>Hello <b>World</b></body></html>\n");
 // });
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = {
+    username: req.cookies["username"]
+  };
+  res.render("urls_new", templateVars);
 });
 
 app.post("/urls", (req, res) => {
@@ -42,23 +52,36 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  const templateVars = { 
+    shortURL: req.params.shortURL, 
+    longURL: urlDatabase[req.params.shortURL],
+    username: req.cookies["username"]
+  };
   res.render("urls_show", templateVars);
 });
+//Delete
 app.post('/urls/:shortURL/delete', (req, res) => {
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
   res.redirect("/urls");
-  //  urlDatabase[shortURL] = req.body.longURL;
-  //when buttom is pressed browser runs this logic = <form method="POST" action="/urls/<%= url %>/delete"> 
 });
-//EDIT = POST /urls/:id // EDIT
+//EDIT
 app.post('/urls/:shortURL', (req, res) => {
   const shortURL = req.params.shortURL;
   urlDatabase[shortURL] = req.body.longURL;
-  //edit urlDatabase[shortURL];
   res.redirect(`/urls/${shortURL}`);
 });
+
+app.post('/login', (req, res) => {
+  let username = req.body.username
+  res.cookie('username', username);
+  res.redirect('/urls');
+});
+app.post('/logout', (req, res) => {
+  res.clearCookie('username')
+  res.redirect('/urls');
+});
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
@@ -67,17 +90,3 @@ app.listen(PORT, () => {
 function generateRandomString() {
   return Math.random().toString(36).substr(2, 6);
 }
-
-//put them in the database short and long
-/*
-We first learned how to respond with a redirect after receiving a POST request. //yes
-We generated a new shortURL and then redirected the user to this new url.  //yes
-We learned that when the browser receives a redirection response,
-it does another GET request to the url in the response.    //ok~~~~~~~
-We created a new route for handling our redirect links;   // no~~~~
-this route obtained the shortURL from the route parameters,
-looked up the corresponding longURL from our urlDatabase,
-and responded with a redirect to the longURL.
-Finally, we tested that our new route is working as expected by making requests
-to it with the command line tool curl and our browser.
-*/
