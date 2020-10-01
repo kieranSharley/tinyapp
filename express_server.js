@@ -1,7 +1,10 @@
 const express = require("express");
 const morgan = require('morgan');
-const cookieParser = require('cookie-parser');
+//const cookieParser = require('cookie-parser');
 const bodyParser = require("body-parser");
+const bcrypt = require('bcrypt');
+const cookieSession = require('cookie-session')
+
 
 //server
 const app = express();
@@ -9,9 +12,16 @@ const PORT = 8080;
 
 //middleware
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieParser());
+//app.use(cookieParser());
 app.use(morgan('dev'));
-
+app.use(bcrypt)
+app.use(cookieSession({
+  name: 'session',
+  keys: ['superlongsecretkey', 'anothersecretthatshouldnotbeembeddedincodetypically']
+}))
+const saltRounds = 10;
+const myPlaintextPassword = 's0/\/\P4$$w0rD';
+const someOtherPlaintextPassword = 'not_bacon';
 
 app.set("view engine", "ejs");
 
@@ -19,7 +29,7 @@ app.set("view engine", "ejs");
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
-    user2RandomID: "aJ48lW"
+    userId: "userRandomID"
   },
   i3BoGr: {
     longURL: "https://www.google.ca",
@@ -56,7 +66,7 @@ app.get("/urls", (req, res) => {
       userId: req.cookies['userId']
     };
     res.render("urls_index", templateVars);
-  }
+  } else { res.redirect('/login')}
 });
 app.get("/urls/new", (req, res) => {
   let userId = req.cookies['userId'];
@@ -167,7 +177,7 @@ app.post('/login', (req, res) => {
 //logout
 app.post('/logout', (req, res) => {
   res.clearCookie('userId', 'password');
-  res.redirect('/urls');
+  res.redirect('/login');
 });
 //register 
 // Checking for an email in the userDatabase 
@@ -223,13 +233,11 @@ const findUserByEmail = (userDatabase, email) => {
 const urlsForUser = function (userId) {
   let filteredURLs = {};
   for (let shortURL in urlDatabase) {
-    if (shortURL[userId] === userId) {
-      filteredURLs += shortURL;
+    console.log("urldata",urlDatabase[shortURL]['userId'])
+    if (userId === urlDatabase[shortURL]['userId']) {
+      filteredURLs[shortURL] = urlDatabase[shortURL];
     }
   }
-  console.log("filteredURLs==",filteredURLs)
   return filteredURLs;
 };
-console.log(urlsForUser())
-
-
+console.log(urlsForUser('aJ48lW'))
