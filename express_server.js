@@ -220,16 +220,16 @@ const findUserByEmail = (userDatabase, email) => {
   }
   return false;
 };
-
 const urlsForUser = function (userId) {
-  //let userId = req.cookies[userId]
   let filteredURLs = {};
   for (let shortURL in urlDatabase) {
     if (shortURL[userId] === userId) {
       filteredURLs += shortURL;
     }
   }
+  console.log("filteredURLs==",filteredURLs)
   return filteredURLs;
 };
+console.log(urlsForUser())
 
 
