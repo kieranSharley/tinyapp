@@ -46,24 +46,26 @@ app.get("/", (req, res) => {
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
+
 app.get("/urls", (req, res) => {
-  const templateVars = {
-    urls: urlDatabase,
-    userId: req.cookies["userId"]
-  };
-  //console.log("this is urlDatabase", urlDatabase);
-
-  res.render("urls_index", templateVars);
+  let userId = req.cookies['userId'];
+  if (userDatabase[userId]) {
+    let usersURLs = urlsForUser(userId);
+    const templateVars = {
+      urls: usersURLs,
+      userId: req.cookies['userId']
+    };
+    res.render("urls_index", templateVars);
+  }
 });
-
-// app.get("/hello", (req, res) => {
-//   res.send("<html><body>Hello <b>World</b></body></html>\n");
-// });
 app.get("/urls/new", (req, res) => {
-  const templateVars = {
-    userId: req.cookies["userId"]
-  };
-  res.render("urls_new", templateVars);
+  let userId = req.cookies['userId'];
+  if (userDatabase[userId]) {
+    const templateVars = {
+      userId: req.cookies["userId"]
+    };
+    res.render("urls_new", templateVars);
+  } else { res.redirect('/login'); }
 });
 //GET /login
 app.get("/login", (req, res) => {
@@ -104,7 +106,6 @@ app.get("/urls/:shortURL", (req, res) => {
   let { shortURL } = req.params;
   // console.log("shortURL===",shortURL)
   let obj = urlDatabase[shortURL];
-  console.log("obj probs undefined===", obj.longURL); //{longURL: example.com, UserId: 'h1234q'}
   const templateVars = {
     userId: req.cookies["userId"],
     shortURL: shortURL,
@@ -124,20 +125,26 @@ app.post('/urls/:shortURL/delete', (req, res) => {
       res.status(401).send('You cannot delete URLs if you are not logged in!');
     }
     res.redirect('/urls');
-  } else 
-  //send a message with this
-    res.redirect('/login')
+  } else
+    //send a message with this
+    res.redirect('/login');
   res.redirect('/register');
 });
 //EDIT
 app.post('/urls/:shortURL', (req, res) => {
-  let newShortURL = req.params.shortURL;
-  let longURL = req.body.longURL;
-  urlDatabase[newShortURL] = {
-    longURL: longURL,
-    userId: req.cookies["userId"]
-  };
-  res.redirect(`/urls/${newShortURL}`);
+  let userId = req.cookies['userId'];
+  if (userId) {
+    let newShortURL = req.params.shortURL;
+    let longURL = req.body.longURL;
+    if ((urlDatabase[shortURL])) {
+      urlDatabase[newShortURL] = {
+        longURL: longURL,
+        userId: req.cookies["userId"]
+      };
+    }
+    res.redirect(`/urls/${newShortURL}`);
+  }
+  res.redirect('/register');
 });
 //login // adapting... to userID
 app.post('/login', (req, res) => {
@@ -213,3 +220,16 @@ const findUserByEmail = (userDatabase, email) => {
   }
   return false;
 };
+
+const urlsForUser = function (userId) {
+  //let userId = req.cookies[userId]
+  let filteredURLs = {};
+  for (let shortURL in urlDatabase) {
+    if (shortURL[userId] === userId) {
+      filteredURLs += shortURL;
+    }
+  }
+  return filteredURLs;
+};
+
+
