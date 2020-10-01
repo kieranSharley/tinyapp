@@ -101,11 +101,10 @@ app.post('/urls/:shortURL', (req, res) => {
 //login // adapting... to userID
 app.post('/login', (req, res) => {
   let email = req.body.email;
-  console.log(email);
   let password = req.body.password;
   let founduser;
   for (let id in users) {
-    if (email === users[id].email) {
+    if (email === users[id].email && password === users[id].password) {
       founduser = users[id];
     }
   }
@@ -131,16 +130,30 @@ app.post('/logout', (req, res) => {
 
 app.post('/register', (req, res) => {
   const userId = generateRandomString();
+  let email = req.body.email;
+  let password = req.body.password;
+  console.log("password is =", password);
+  for (let id in users) {
+    if (email === users[id].email) {
+      res.status(400).send('This email is already registered.');
+      return;
+    }
+  }
+
+  if (!email || !password) {
+    res.send('You must enter in a valid username and password');
+    return;
+  }
+
   users[userId] = {
     id: userId,
     email: req.body.email,
     password: req.body.password,
   };
-  console.log(users);
   res.cookie('userId', userId);
-  //console.log(users);
-
   res.redirect('/urls');
+
+
 });
 
 
