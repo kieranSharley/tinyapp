@@ -10,24 +10,16 @@
       <a class="nav-item nav-link" href="/urls">My URLs</a>
       <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       <a class="nav-item nav-link" href="/register">Register</a>
-
+      <a class="nav-item nav-link" href="/login">Login</a>
       <% if (userId) { %>
       <form method="POST" action="/logout">
       <p> Logged in as <%= userId%>  </p>
         <button type="submit" class="btn btn-primary">logout</button>
       </form>
-      <% }  else { %>
-      <form method="POST" action="/login">
-        <label>Login:</label>
-        <input type="text" name="email">
-        <br/>
-        <label>Password:</label>
-        <input type="text" name="password">
-
-        <button type="submit" class="btn btn-primary">login</button>
-      </form>
       <%}%>
+    
       </div>
     </div>
   </nav>
+  
 </header>

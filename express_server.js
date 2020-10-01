@@ -14,12 +14,12 @@ app.use(cookieParser());
 
 app.set("view engine", "ejs");
 
-//datastore
+//data storage
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
-const users = {
+const userDatabase = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
@@ -55,6 +55,13 @@ app.get("/urls/new", (req, res) => {
     userId: req.cookies["userId"]
   };
   res.render("urls_new", templateVars);
+});
+//GET /login
+app.get("/login", (req, res) => {
+  const templateVars = {
+    userId: req.cookies["userId"]
+  };
+  res.render("urls_login", templateVars);
 });
 
 app.post("/urls", (req, res) => {
@@ -103,9 +110,9 @@ app.post('/login', (req, res) => {
   let email = req.body.email;
   let password = req.body.password;
   let founduser;
-  for (let id in users) {
-    if (email === users[id].email && password === users[id].password) {
-      founduser = users[id];
+  for (let id in userDatabase) {
+    if (email === userDatabase[id].email && password === userDatabase[id].password) {
+      founduser = userDatabase[id];
     }
   }
   if (founduser) {
@@ -122,9 +129,7 @@ app.post('/logout', (req, res) => {
   res.redirect('/urls');
 });
 //register 
-// If the e-mail or password are empty strings, send back a response with the 400 status code.
-// If someone tries to register with an email that is already in the users object,
-// send back a response with the 400 status code. Checking for an email in the users 
+// Checking for an email in the userDatabase 
 // object is something we'll need to do in other routes as well. Consider creating
 // an email lookup helper function to keep your code DRY
 
@@ -133,19 +138,19 @@ app.post('/register', (req, res) => {
   let email = req.body.email;
   let password = req.body.password;
   console.log("password is =", password);
-  for (let id in users) {
-    if (email === users[id].email) {
+  for (let id in userDatabase) {
+    if (email === userDatabase[id].email) {
       res.status(400).send('This email is already registered.');
       return;
     }
   }
 
   if (!email || !password) {
-    res.send('You must enter in a valid username and password');
+    res.status(400).send('You must enter in a valid username and password');
     return;
   }
 
-  users[userId] = {
+  userDatabase[userId] = {
     id: userId,
     email: req.body.email,
     password: req.body.password,
@@ -165,3 +170,7 @@ app.listen(PORT, () => {
 function generateRandomString() {
   return Math.random().toString(36).substr(2, 6);
 }
+
+// const findUserByEmail = (userDatabase, email) => {
+  
+// };
