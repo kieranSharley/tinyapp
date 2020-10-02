@@ -104,6 +104,7 @@ app.get("/urls/:shortURL", (req, res) => {
     shortURL: shortURL,
     longURL: urlObj.longURL
   };
+  
   res.render("urls_show", templateVars);
 });
 
