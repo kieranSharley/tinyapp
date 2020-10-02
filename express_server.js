@@ -182,7 +182,7 @@ app.post('/register', (req, res) => {
     req.session.userId = userId;
     console.log(req.session.userId);
     res.redirect('/urls');
-
+    
   });
 });
 
@@ -221,7 +221,7 @@ app.post('/login', (req, res) => {
 //~~~~~POST LOGOUT~~~~~
 app.post('/logout', (req, res) => {
   req.session = null;
-  res.redirect('/login');
+  res.redirect('/urls');
 });
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
