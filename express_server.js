@@ -1,9 +1,9 @@
 const express = require("express");
 const morgan = require('morgan');
-//const cookieParser = require('cookie-parser');
+const cookieParser = require('cookie-parser');
 const bodyParser = require("body-parser");
 const bcrypt = require('bcrypt');
-const cookieSession = require('cookie-session')
+//const cookieSession = require('cookie-session');
 
 
 //server
@@ -12,16 +12,16 @@ const PORT = 8080;
 
 //middleware
 app.use(bodyParser.urlencoded({ extended: true }));
-//app.use(cookieParser());
+app.use(cookieParser());
 app.use(morgan('dev'));
-app.use(bcrypt)
-app.use(cookieSession({
-  name: 'session',
-  keys: ['superlongsecretkey', 'anothersecretthatshouldnotbeembeddedincodetypically']
-}))
-const saltRounds = 10;
-const myPlaintextPassword = 's0/\/\P4$$w0rD';
-const someOtherPlaintextPassword = 'not_bacon';
+//--?--app.use(bcrypt);
+//app.use(cookieSession({
+//   name: 'session',
+//   keys: ['superlongsecretkey', 'anothersecretthatshouldnotbeembeddedincodetypically']
+// }));
+// const saltRounds = 10;
+// const myPlaintextPassword = 's0/\/\P4$$w0rD';
+// const someOtherPlaintextPassword = 'not_bacon';
 
 app.set("view engine", "ejs");
 
@@ -66,7 +66,7 @@ app.get("/urls", (req, res) => {
       userId: req.cookies['userId']
     };
     res.render("urls_index", templateVars);
-  } else { res.redirect('/login')}
+  } else { res.redirect('/login'); }
 });
 app.get("/urls/new", (req, res) => {
   let userId = req.cookies['userId'];
@@ -146,7 +146,7 @@ app.post('/urls/:shortURL', (req, res) => {
   if (userId) {
     let newShortURL = req.params.shortURL;
     let longURL = req.body.longURL;
-    if ((urlDatabase[shortURL])) {
+    if ((urlDatabase[newShortURL])) {
       urlDatabase[newShortURL] = {
         longURL: longURL,
         userId: req.cookies["userId"]
@@ -156,23 +156,29 @@ app.post('/urls/:shortURL', (req, res) => {
   }
   res.redirect('/register');
 });
-//login // adapting... to userID
+
+//login
 app.post('/login', (req, res) => {
   let email = req.body.email;
   let password = req.body.password;
-  let founduser;
-  for (let id in userDatabase) {
-    if (email === userDatabase[id].email && password === userDatabase[id].password) {
-      founduser = userDatabase[id];
-    }
-  }
-  if (founduser) {
-    res.cookie('userId', founduser.id);
-    res.redirect('/urls');
-  } else {
-    res.send('user not found!');
-  }
+  const existingUser = findUserByEmail(userDatabase, email);
+  if (existingUser) {
+    bcrypt.compare(password, existingUser.password, function (err, isPasswordMatched) {
+      if (isPasswordMatched) {
+        //req.session.userId = userId; // implement after
+        console.log("existingUser=", existingUser);
+        console.log("existingUserID=", existingUser.id);
 
+        res.cookie('userId', existingUser.id);
+        res.redirect('/urls');
+      } else {
+        res.redirect('/login');
+      }
+    });
+  } else {
+    res.status(401);
+    res.redirect('/register');
+  }
 });
 //logout
 app.post('/logout', (req, res) => {
@@ -189,8 +195,8 @@ app.post('/register', (req, res) => {
   let email = req.body.email;
   let password = req.body.password;
   console.log("password is =", password);
-  for (let id in userDatabase) {
-    if (email === userDatabase[id].email) {
+  for (let user in userDatabase) {
+    if (email === userDatabase[user].email) {
       res.status(400).send('This email is already registered.');
       return;
     }
@@ -199,16 +205,16 @@ app.post('/register', (req, res) => {
     res.status(400).send('You must enter in a valid username and password');
     return;
   }
-
-  userDatabase[userId] = {
-    id: userId,
-    email: req.body.email,
-    password: req.body.password,
-  };
+  bcrypt.hash(password, 6, function (err, hashedPassword) {
+    userDatabase[userId] = {
+      id: userId,
+      email: req.body.email,
+      password: hashedPassword
+    };
+  });
+  console.log("userId is ===", userId);
   res.cookie('userId', userId);
   res.redirect('/urls');
-
-
 });
 
 
@@ -222,22 +228,22 @@ function generateRandomString() {
 }
 
 const findUserByEmail = (userDatabase, email) => {
-  for (let shortURL in userDatabase) {
-    const obj = userDatabase[shortURL];
-    if (obj.email === email) {
-      return obj;
+  for (let userId in userDatabase) {
+    const knownUser = userDatabase[userId];
+    if (knownUser.email === email) {
+      return knownUser;
     }
   }
   return false;
 };
+
 const urlsForUser = function (userId) {
   let filteredURLs = {};
   for (let shortURL in urlDatabase) {
-    console.log("urldata",urlDatabase[shortURL]['userId'])
+    console.log("urldata", urlDatabase[shortURL]['userId']);
     if (userId === urlDatabase[shortURL]['userId']) {
       filteredURLs[shortURL] = urlDatabase[shortURL];
     }
   }
   return filteredURLs;
 };
-console.log(urlsForUser('aJ48lW'))
