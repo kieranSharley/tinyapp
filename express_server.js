@@ -1,3 +1,5 @@
+
+/*****DEPENDENCIES *****/
 const express = require("express");
 const morgan = require('morgan');
 const bodyParser = require("body-parser");
@@ -5,11 +7,11 @@ const bcrypt = require('bcrypt');
 const cookieSession = require('cookie-session');
 const { findUserByEmail, urlsForUser, generateRandomString } = require('./helpers');
 
-//~~~~~SERVER~~~~~
+/*****SERVER*****/
 const app = express();
 const PORT = 8080;
 
-//~~~~~MIDDLEWARE~~~~~
+/*****MIDDLEWARE*****/
 app.use(bodyParser.urlencoded({ extended: true }));
 //app.use(cookieParser());
 app.use(morgan('dev'));
@@ -21,7 +23,7 @@ app.use(cookieSession({
 
 app.set("view engine", "ejs");
 
-//~~~~~ DATA STORAGE~~~~~
+/***** DATA STORAGE*****/
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
@@ -46,11 +48,11 @@ const userDatabase = {
   },
 };
 
-//~~~~~~~~~~ROUTES~~~~~~~~~~
+//**********ROUTES**********
 
-//~~~~~URL PAGES~~~~~
+//*****URL PAGES*****
 
-//~~~~~HOME~~~~~
+//*****HOME*****
 app.get("/", (req, res) => {
   res.redirect('/urls');
 });
@@ -59,7 +61,7 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-//~~~~~MY URLS PAGE~~~~~
+//*****MY URLS/HOME PAGE*****
 app.get("/urls", (req, res) => {
   let userId = req.session['userId'];
   if (userDatabase[userId]) {
@@ -69,11 +71,11 @@ app.get("/urls", (req, res) => {
       userId: req.session['userId']
     };
     res.render("urls_index", templateVars);
-  } else {
+  } else if (!userDatabase[userId]){
     res.redirect('/login');
-  }
+  } else {res.status(400).send("You must be logged in to view this page")}
 });
-//~~~~~ CREATE URL PAGE~~~~~
+//***** CREATE URL PAGE*****
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = {
@@ -83,7 +85,7 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
-//~~~~~ NEW URLS PAGE~~~~~
+//***** NEW URLS PAGE*****
 app.get("/urls/new", (req, res) => {
   let userId = req.session['userId'];
   if (userDatabase[userId]) {
@@ -95,7 +97,7 @@ app.get("/urls/new", (req, res) => {
     res.redirect('/login');
   }
 });
-//~~~~~ YOUR CREATED URL PAGE
+//***** YOUR CREATED URL PAGE *****
 app.get("/urls/:shortURL", (req, res) => {
   let { shortURL } = req.params;
   let urlObj = urlDatabase[shortURL];
@@ -108,7 +110,7 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-//~~~~~DELETE URL~~~~~
+//*****DELETE URL*****
 app.post('/urls/:shortURL/delete', (req, res) => {
   let userId = req.session['userId'];
   if (userId) {
@@ -123,7 +125,7 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   res.redirect('/login');
 });
 
-//~~~~~EDIT URL~~~~~
+//*****EDIT URL*****
 app.post('/urls/:shortURL', (req, res) => {
   let userId = req.session['userId'];
   if (userId) {
@@ -139,7 +141,7 @@ app.post('/urls/:shortURL', (req, res) => {
   }
   res.redirect('/register');
 });
-//~~~~~REDIRECT TO LONG URL~~~~~
+//*****REDIRECT TO LONG URL*****
 app.get('/u/:shortURL', (req, res) => {
   let { shortURL } = req.params;
   const urlObj = urlDatabase[shortURL];
@@ -147,9 +149,9 @@ app.get('/u/:shortURL', (req, res) => {
 });
 
 
-//~~~~~~~~~~REGISTER - LOGIN - LOGOUT ROUTES~~~~~~~~~~~~~~~~~~~~
+//**********REGISTER - LOGIN - LOGOUT ROUTES********************
 
-//~~~~~GET REGISTER~~~~~
+//*****GET REGISTER*****
 app.get('/register', (req, res) => {
   const templateVars = {
     userId: req.session["userId"],
@@ -158,7 +160,7 @@ app.get('/register', (req, res) => {
   res.render('urls_register', templateVars);
 });
 
-//~~~~~POST REGISTER~~~~~
+//*****POST REGISTER*****
 app.post('/register', (req, res) => {
   const userId = generateRandomString();
   let email = req.body.email;
@@ -187,7 +189,7 @@ app.post('/register', (req, res) => {
   });
 });
 
-//~~~~~GET LOGIN~~~~~
+//*****GET LOGIN*****
 app.get("/login", (req, res) => {
   const templateVars = {
     userId: req.session["userId"]
@@ -195,7 +197,7 @@ app.get("/login", (req, res) => {
   res.render("urls_login", templateVars);
 });
 
-//~~~~~POST LOGIN~~~~~
+//*****POST LOGIN*****
 app.post('/login', (req, res) => {
   let email = req.body.email;
   let password = req.body.password;
@@ -210,22 +212,23 @@ app.post('/login', (req, res) => {
         req.session.userId = existingUser.id;
         res.redirect('/urls');
       } else {
+        res.status(400)
         res.redirect('/login');
       }
     });
   } else {
-    res.status(400);
-    res.redirect('/register');
+    res.status(400).send("You are not a registered user");
+    res.redirect('/login');
   }
 });
 
-//~~~~~POST LOGOUT~~~~~
+//*****POST LOGOUT*****
 app.post('/logout', (req, res) => {
   req.session = null;
   res.redirect('/urls');
 });
 
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//************************************************************
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);

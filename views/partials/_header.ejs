@@ -13,9 +13,10 @@
       <a class="nav-item nav-link" href="/login">Login</a>
       <% if (userId) { %>
       <form method="POST" action="/logout">
-      <p> Logged in as <%= userId%>  </p>
         <button type="submit" class="btn btn-primary">Logout</button>
       </form>
+      <br>
+      <p> Logged in as <%= userId %>  </p>
       <%}%>
     
       </div>
